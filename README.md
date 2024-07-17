@@ -10,3 +10,4 @@ O teste consiste em criar uma aplicação que consuma a API de CEP exibindo os d
 - Ao clicar em um botão de SALVAR, os dados devem ser salvos em um arquivo JSON.
 - Para obter os dados do endereço, utilize a API do ViaCEP (https://viacep.com.br/). Ex: URL: viacep.com.br/ws/01001000/json/
 - Stack Next.js/Typescript (Tsx)
+- Enviar repositório com code para analise
