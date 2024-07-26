@@ -1,6 +1,6 @@
 "use client";
+import { useEffect, useState } from "react";
 import styles from "./page.module.css";
-import { useCallback, useEffect, useState } from "react";
 
 interface IAdress {
   cep: string;
@@ -19,47 +19,74 @@ export default function Home() {
     state: "",
   });
 
+  const [error, setError] = useState<string | undefined>();
+
   function cleanForm() {
-    setForm(undefined);
+    setForm({
+      cep: "",
+      street: "",
+      neighborhood: "",
+      city: "",
+      state: "",
+    });
   }
 
   function validateCep(cep: string) {
-    if (cep.length >= 5) {
-      cep = `${cep.slice(0, 5)}-${cep.slice(5, 8)}`;
-    }
+    cep = cep.replace(/\D/g, "");
 
-    console.log(cep);
+    if (cep.length > 5) {
+      setError("");
+      cep = `${cep.slice(0, 5)}-${cep.slice(5)}`;
+    }
 
     return cep;
   }
 
-  const searchAddress = useCallback(async () => {
-    await fetch(`https://viacep.com.br/ws/${form?.cep}/json/`)
-      .then((resp) => resp.json())
-      .then((address) => {
-        const formEdit = {
-          ...form,
-          street: address.logradouro,
-          neighborhood: address.bairro,
-          city: address.localidade,
-          state: address.uf,
-        };
+  async function searchAddress(cep: string) {
+    if (cep.replace("-", "").length === 8) {
+      await fetch(`https://viacep.com.br/ws/${cep.replace("-", "")}/json/`)
+        .then((resp) => resp.json())
+        .then((address) => {
+          if (address.erro) return setError("CEP não encontrado");
 
-        setForm(formEdit as IAdress);
-      })
-      .catch((e) => console.log(e));
-  }, [form]);
+          const formEdit = {
+            ...form,
+            street: address.logradouro,
+            neighborhood: address.bairro,
+            city: address.localidade,
+            state: address.uf,
+          };
+
+          setForm(formEdit as IAdress);
+        })
+        .catch((e) => console.log(e));
+    }
+  }
 
   function submitForm(event: React.FormEvent) {
-    console.log(event);
+    event.preventDefault();
+    saveForm();
+  }
+
+  function saveForm() {
+    if (form) {
+      const json = JSON.stringify(form, null, 2);
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "form-data.json";
+      a.click();
+      URL.revokeObjectURL(url);
+    }
   }
 
   useEffect(() => {
-    if (form?.cep.length === 9) {
-      searchAddress();
+    if (form?.cep.replace("-", "").length === 8) {
+      searchAddress(form.cep);
     }
   }, [form?.cep]);
-  
+
   return (
     <main className={styles.main}>
       <h1>Buscar endereço</h1>
@@ -75,13 +102,14 @@ export default function Home() {
           onChange={(e) => {
             const formEdit = {
               ...form,
-              cep: validateCep(e.target.value.replace(/\D/g, "")),
+              cep: validateCep(e.target.value),
             };
             setForm(formEdit as IAdress);
           }}
         />
+        {error && <span className={styles.error}>{error}</span>}
 
-        <label htmlFor="stret">Rua</label>
+        <label htmlFor="street">Rua</label>
         <input
           id="street"
           className={styles.input}

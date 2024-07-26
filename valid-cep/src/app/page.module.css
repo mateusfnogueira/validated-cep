@@ -33,3 +33,10 @@
   border-radius: 8px;
   background-color: red;
 }
+
+.error {
+  color: red;
+  font-size: 10px;
+  margin-top: 4px;
+  font-weight: bold;
+}
